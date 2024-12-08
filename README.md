@@ -53,7 +53,9 @@ In the development environment, data is stored in **Azure Data Lake Storage (ADL
 
    ![Dev ADLS Landing Zone](assets/images/dev_adls_landing_zone.png)
 
-1. **Pipeline Activities**:
+2. **Pipeline Activities**:
+
+    The pipeline configuration file can be found in the [adf_AirlineDataProcessingPipeline.json](pipelines/adf_AirlineDataProcessingPipeline.json) file (*sensitive data masked*).
 
     ![Dev ADF Pipeline](assets/images/dev_adf_pipeline.png)
 
@@ -66,20 +68,30 @@ In the development environment, data is stored in **Azure Data Lake Storage (ADL
     ![AirportFlightsDataTransformation Data Flow](assets/images/AirportFlightDataTransformation_dataflow.png)
 
     - **Source Datasets**:
-      - The data flow begins by reading from two source datasets:
-      - `FlightsDimSource`: Contains flight data such as carrier, origin airport ID, destination airport ID, and delays.
-      - `AirportDimSource`: Contains airport information such as airport ID, city, state, and airport name.
+
+      The data flow begins by reading from two source datasets:
+      - `FlightsDimSource`: Contains flight data such as carrier, origin airport ID, destination airport ID, and delays. The dataset can be found in the [flights.csv file](outputs/processed_data/flights.csv).
+      - `AirportDimSource`: Contains airport information such as airport ID, city, state, and airport name. The dataset can be found in the [airports.csv file](outputs/processed_data/airports.csv).
 
     - **Transformations**:
-      - The transformation flow proceeds with several operations to clean, join, and modify the data:
+
+      The transformation flow proceeds with several operations to clean, join, and modify the data:
       - **JoinWithAirportDimDataForOriginAirportDetails**: Joins the flight data with the airport data to get the details of the origin airport (such as airport name, state, and city).
       - **AddAndModifyOriginAirportDetails**: Modifies the columns to include the additional airport details like the origin airport name, state, and city.
       - **JoinWithAirportDimDataForDestAirportDetails**: Joins the flight data with the airport data to get the details of the destination airport.
       - **AddAndModifyDestinationAirportDetails**: Modifies the columns to include the additional airport details for the destination airport.
 
     - **Sink Dataset**:
-      - After the transformations, the data is written to the **ProcessedData** sink. The processed data includes:
+
+      ![Processed Data](assets/images/processed_data.png)
+
+      After the transformations, the data is written to the **ProcessedData** sink, stored in the `processed_data` folder within the **airlines** container of the Dev ADF storage account.
+
+      The processed data includes:
       - Carrier, OriginAirportID, DestAirportID, OriginAirportName, OriginState, OriginCity, DestAirportName, DestState, DestCity, DepDelay, ArrDelay.
+      - The processed data is saved as partitioned CSV files (e.g., `part-00000`, `part-00001`, etc.). They can be viewed in the [processed_data folder](outputs/processed_data/).
+  
+    To see the complete configuration of the data flow, refer to the [AirportFlightDataTransformation data flow JSON file](pipelines/adf_data_flow/AirportFlightDataTransformation.json) (*sensitive data masked*).
 
 - **Success/Failure Notifications**: Whether the pipeline succeeds or fails, notifications are sent via Logic Apps to alert stakeholders.
 
