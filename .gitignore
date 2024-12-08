@@ -1,0 +1,75 @@
+# Python specific
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+.env
+*.venv
+venv/
+Pipfile
+Pipfile.lock
+poetry.lock
+
+# Logs
+*.log
+*.log.*
+
+# Virtual environment directories
+env/
+venv/
+
+# Azure specific
+*.publishsettings
+*.azuredevops
+*.config
+*.token
+*.bak
+
+
+# Git-specific
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*.orig
+*.rej
+
+# MacOS specific
+*.DS_Store
+
+# Temporary or backup files
+~$*
+*.tmp
+*.bak
+*.old
+*.swp
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Compiled files
+*.so
+*.dll
+
+# Ignore logs
+logs/
+*.log
+
+# System files
+Thumbs.db
+desktop.ini
+
+# Others
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
