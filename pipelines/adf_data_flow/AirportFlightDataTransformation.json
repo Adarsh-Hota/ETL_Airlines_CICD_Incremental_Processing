@@ -1,0 +1,114 @@
+{
+    "name": "AirportFlightDataTransformation",
+    "properties": {
+        "type": "MappingDataFlow",
+        "typeProperties": {
+            "sources": [
+                {
+                    "dataset": {
+                        "referenceName": "FlightsDimSource",
+                        "type": "DatasetReference"
+                    },
+                    "name": "FlightsDimData"
+                },
+                {
+                    "dataset": {
+                        "referenceName": "AirportDimSource",
+                        "type": "DatasetReference"
+                    },
+                    "name": "AirportDimData"
+                }
+            ],
+            "sinks": [
+                {
+                    "dataset": {
+                        "referenceName": "ProcessedData",
+                        "type": "DatasetReference"
+                    },
+                    "name": "WriteProcessedData"
+                }
+            ],
+            "transformations": [
+                {
+                    "name": "JoinWithAirportDimDataForOriginAirportDetails"
+                },
+                {
+                    "name": "AddAndModifyOriginAirportDetails"
+                },
+                {
+                    "name": "JoinWithAirportDimDataForDestAirportDetails"
+                },
+                {
+                    "name": "AddAndModifyDestinationAirportDetails"
+                }
+            ],
+            "scriptLines": [
+                "source(output(",
+                "          Carrier as string,",
+                "          OriginAirportID as string,",
+                "          DestAirportID as string,",
+                "          DepDelay as string,",
+                "          ArrDelay as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     ignoreNoFilesFound: false) ~> FlightsDimData",
+                "source(output(",
+                "          airport_id as string,",
+                "          city as string,",
+                "          state as string,",
+                "          name as string",
+                "     ),",
+                "     allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     ignoreNoFilesFound: false) ~> AirportDimData",
+                "FlightsDimData, AirportDimData join(OriginAirportID == airport_id,",
+                "     joinType:'inner',",
+                "     matchType:'exact',",
+                "     ignoreSpaces: false,",
+                "     broadcast: 'auto')~> JoinWithAirportDimDataForOriginAirportDetails",
+                "JoinWithAirportDimDataForOriginAirportDetails select(mapColumn(",
+                "          Carrier,",
+                "          OriginAirportID,",
+                "          OriginAirportName = name,",
+                "          OriginState = state,",
+                "          OriginCity = city,",
+                "          DestAirportID,",
+                "          DepDelay,",
+                "          ArrDelay",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> AddAndModifyOriginAirportDetails",
+                "AddAndModifyOriginAirportDetails, AirportDimData join(DestAirportID == airport_id,",
+                "     joinType:'inner',",
+                "     matchType:'exact',",
+                "     ignoreSpaces: false,",
+                "     broadcast: 'auto')~> JoinWithAirportDimDataForDestAirportDetails",
+                "JoinWithAirportDimDataForDestAirportDetails select(mapColumn(",
+                "          Carrier,",
+                "          OriginAirportID,",
+                "          DestAirportID,",
+                "          OriginAirportName,",
+                "          DestAirportName = name,",
+                "          OriginState,",
+                "          DestState = state,",
+                "          OriginCity,",
+                "          DestCity = city,",
+                "          DepDelay,",
+                "          ArrDelay",
+                "     ),",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true) ~> AddAndModifyDestinationAirportDetails",
+                "AddAndModifyDestinationAirportDetails sink(allowSchemaDrift: true,",
+                "     validateSchema: false,",
+                "     truncate: true,",
+                "     umask: 0777,",
+                "     preCommands: [],",
+                "     postCommands: [],",
+                "     skipDuplicateMapInputs: true,",
+                "     skipDuplicateMapOutputs: true,",
+                "     saveOrder: 1) ~> WriteProcessedData"
+            ]
+        }
+    }
+}

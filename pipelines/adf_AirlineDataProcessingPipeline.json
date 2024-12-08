@@ -1,0 +1,200 @@
+{
+    "name": "AirlineDataProcessingPipeline",
+    "properties": {
+        "activities": [
+            {
+                "name": "CheckIfFlightsFileExists",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "FlightsDimSource",
+                        "type": "DatasetReference"
+                    },
+                    "fieldList": [
+                        "exists"
+                    ],
+                    "storeSettings": {
+                        "type": "AzureBlobFSReadSettings",
+                        "recursive": true,
+                        "enablePartitionDiscovery": false
+                    },
+                    "formatSettings": {
+                        "type": "DelimitedTextReadSettings"
+                    }
+                }
+            },
+            {
+                "name": "If Condition1",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "CheckIfFlightsFileExists",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@activity('CheckIfFlightsFileExists').output.exists",
+                        "type": "Expression"
+                    },
+                    "ifFalseActivities": [
+                        {
+                            "name": "Set FalseParam",
+                            "type": "SetVariable",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "FalseParam",
+                                "value": {
+                                    "value": "@activity('CheckIfFlightsFileExists').output.exists",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    ],
+                    "ifTrueActivities": [
+                        {
+                            "name": "Set TrueParam",
+                            "type": "SetVariable",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "TrueParam",
+                                "value": {
+                                    "value": "@activity('CheckIfFlightsFileExists').output.exists",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "AirportFlightsDataTransformation",
+                            "type": "ExecuteDataFlow",
+                            "dependsOn": [
+                                {
+                                    "activity": "Set TrueParam",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "dataflow": {
+                                    "referenceName": "AirportFlightDataTransformation",
+                                    "type": "DataFlowReference"
+                                },
+                                "compute": {
+                                    "coreCount": 8,
+                                    "computeType": "General"
+                                },
+                                "traceLevel": "Fine"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "PipelineSuccessNotification",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "If Condition1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json"
+                    },
+                    "url": "<WEBHOOK_URL>",
+                    "body": {
+                        "to": "<EMAIL_ADDRESS>",
+                        "subject": "Pipeline Run Notification",
+                        "body": "Pipeline Run Successful"
+                    }
+                }
+            },
+            {
+                "name": "PipelineFailNotification",
+                "type": "WebActivity",
+                "dependsOn": [
+                    {
+                        "activity": "If Condition1",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json"
+                    },
+                    "url": "<WEBHOOK_URL>",
+                    "body": {
+                        "to": "<EMAIL_ADDRESS>",
+                        "subject": "Pipeline Run Notification",
+                        "body": "Pipeline Run Fail"
+                    }
+                }
+            }
+        ],
+        "variables": {
+            "TrueParam": {
+                "type": "Boolean"
+            },
+            "FalseParam": {
+                "type": "Boolean"
+            }
+        },
+        "annotations": [],
+        "lastPublishTime": "2024-12-01T15:33:31Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}
